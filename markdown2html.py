@@ -10,12 +10,14 @@ Args:
     Arg 2: Output file name (HTML)
 """
 
+
 markdownHeader = {
     '#': '<h1> </h1>', '##': '<h2> </h2>', '###': '<h3> </h3>',
     '####': '<h4> </h4>', '#####': '<h5> </h5>', '######': '<h6> </h6>'
 }
 
 markdownList = {'-': '<li> </li>', '*': '<li> </li>'}
+
 
 if __name__ == '__main__':
     if len(sys.argv) != 3:
