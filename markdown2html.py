@@ -1,23 +1,10 @@
 #!/usr/bin/python3
 import sys
+import hashlib
 from os.path import exists
 
-"""
-A markdown to HTML file converter
-
-Args:
-    Arg 1: Markdown file
-    Arg 2: Output file name (HTML)
-"""
-
-
-markdownHeader = {
-    '#': '<h1> </h1>', '##': '<h2> </h2>', '###': '<h3> </h3>',
-    '####': '<h4> </h4>', '#####': '<h5> </h5>', '######': '<h6> </h6>'
-}
-
-markdownList = {'-': '<li> </li>', '*': '<li> </li>'}
-
+def md5_hash(text):
+    return hashlib.md5(text.encode()).hexdigest()
 
 if __name__ == '__main__':
     if len(sys.argv) != 3:
@@ -35,27 +22,68 @@ if __name__ == '__main__':
         sys.stderr.write(f"Missing {input_file}\n")
         exit(1)
 
-    ulCount = 0
+    ul_count = 0
+    ol_count = 0
     with open(input_file, 'r') as markdown, open(output_file, 'w') as htmlFile:
         for line in markdown:
             line = line.rstrip()
             if line.startswith('#'):
-                hash = line.split(' ')[0]
-                htmlFile.write('{}{}{}\n'.format(
-                    markdownHeader[hash].split(' ')[0], line[len(hash)+1:], markdownHeader[hash].split(' ')[1]))
+                hash_count = line.count('#')
+                line_content = line[hash_count:].strip()
+                htmlFile.write(f'<h{hash_count}>{line_content}</h{hash_count}>\n')
             elif line.startswith('-'):
-                if ulCount == 0:
+                if ul_count == 0:
                     htmlFile.write('<ul>\n')
-                htmlFile.write('\t{}{}{}\n'.format(
-                    markdownList['-'].split(' ')[0], line[2:], markdownList['-'].split(' ')[1]))
-                ulCount += 1
-            else:
-                if ulCount > 0:
+                htmlFile.write(f'  <li>{line[2:].strip()}</li>\n')
+                ul_count += 1
+            elif line.startswith('*'):
+                if ol_count == 0:
+                    htmlFile.write('<ol>\n')
+                htmlFile.write(f'  <li>{line[2:].strip()}</li>\n')
+                ol_count += 1
+            elif line == '':
+                if ul_count > 0:
                     htmlFile.write('</ul>\n')
-                    ulCount = 0
-                htmlFile.write(line + '\n')
+                    ul_count = 0
+                if ol_count > 0:
+                    htmlFile.write('</ol>\n')
+                    ol_count = 0
+            else:
+                if ul_count > 0:
+                    htmlFile.write('</ul>\n')
+                    ul_count = 0
+                if ol_count > 0:
+                    htmlFile.write('</ol>\n')
+                    ol_count = 0
 
-        if ulCount > 0:
+                # Handle paragraph text
+                paragraphs = line.split('\n\n')
+                for paragraph in paragraphs:
+                    paragraph = paragraph.strip()
+                    if paragraph:
+                        paragraph = paragraph.replace("**", "<b>").replace("__", "<em>").replace("**", "</b>").replace("__", "</em>")
+                        paragraph = paragraph.replace("<br>", "<br/>")
+                        
+                        while '[[' in paragraph and ']]' in paragraph:
+                            start = paragraph.index('[[')
+                            end = paragraph.index(']]') + 2
+                            content = paragraph[start+2:end-2]
+                            md5_content = md5_hash(content)
+                            paragraph = paragraph.replace(paragraph[start:end], md5_content)
+
+                        while '((' in paragraph and '))' in paragraph:
+                            start = paragraph.index('((')
+                            end = paragraph.index('))') + 2
+                            content = paragraph[start+2:end-2]
+                            modified_content = content.replace('c', '').replace('C', '')
+                            paragraph = paragraph.replace(paragraph[start:end], modified_content)
+
+                        htmlFile.write(f'<p>\n    {paragraph}\n</p>\n')
+
+        # Ensure any remaining lists are closed
+        if ul_count > 0:
             htmlFile.write('</ul>\n')
+        if ol_count > 0:
+            htmlFile.write('</ol>\n')
 
     exit(0)
