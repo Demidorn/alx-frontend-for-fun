@@ -2,65 +2,58 @@
 import sys
 from os.path import exists
 
-"""A markdown to html file
-    Args:
-        Arg 1: Markdown file
-        Arg 2: output file name (HTML)
-    """
+"""
+A markdown to HTML file converter
 
-markdownHeader = {'#': '<h1> </h1>', '##': '<h2> </h2>', '###': '<h3> </h3>',
-                  '####': '<h4> </h4>', '#####': '<h5> </h5>', '######': '<h6> </h6>'}
+Args:
+    Arg 1: Markdown file
+    Arg 2: Output file name (HTML)
+"""
+
+markdownHeader = {
+    '#': '<h1> </h1>', '##': '<h2> </h2>', '###': '<h3> </h3>',
+    '####': '<h4> </h4>', '#####': '<h5> </h5>', '######': '<h6> </h6>'
+}
 
 markdownList = {'-': '<li> </li>', '*': '<li> </li>'}
 
 if __name__ == '__main__':
-
-    """Check if number of arguments == 2"""
-
     if len(sys.argv) != 3:
         sys.stderr.write("Usage: ./markdown2html.py README.md README.html\n")
         exit(1)
 
-    """Check if input file is a correct markdown file"""
-    if "." in sys.argv[1]:
-        newArr = sys.argv[1].split('.')
-        if len(newArr) != 2:
-            sys.stderr.write('Bad Markdown file\n')
-            exit(1)
-        if newArr[1] != "md":
-            sys.stderr.write('First argument must a markdown file\n')
+    input_file = sys.argv[1]
+    output_file = sys.argv[2]
 
-    """Check if markdown file exist"""
-    if exists(sys.argv[1]) == False:
-        sys.stderr.write('Missing {}\n'.format(sys.argv[1]))
+    if not input_file.endswith(".md"):
+        sys.stderr.write("First argument must be a markdown file\n")
         exit(1)
 
-    """Opening the markdown file for file operations"""
+    if not exists(input_file):
+        sys.stderr.write(f"Missing {input_file}\n")
+        exit(1)
+
     ulCount = 0
-    with open(sys.argv[1]) as markdown:
-        line = True
-
-        while line:
-            line = markdown.readline()
-            if line.startswith('#'):  # Headings operation
+    with open(input_file, 'r') as markdown, open(output_file, 'w') as htmlFile:
+        for line in markdown:
+            line = line.rstrip()
+            if line.startswith('#'):
                 hash = line.split(' ')[0]
-
-                with open(sys.argv[2], 'a') as htmlFile:
-                    hashL = len(hash) + 1
-                    htmlFile.write('{}{}{}\n'.format(
-                        markdownHeader[hash].split(' ')[0], line[hashL: -1], markdownHeader[hash].split(' ')[1]))
-
-            if line.startswith('-'):  # Unordered list operation
-                with open(sys.argv[2], 'a') as htmlFile:
-                    if ulCount == 0:
-                        htmlFile.write('<ul>\n')
-                    else:
-                        htmlFile.write('\t{}{}{}\n'.format(
-                            markdownList['-'].split(' ')[0], line[2: -1], markdownList['-'].split(' ')[1]))
-                    ulCount += 1
-
+                htmlFile.write('{}{}{}\n'.format(
+                    markdownHeader[hash].split(' ')[0], line[len(hash)+1:], markdownHeader[hash].split(' ')[1]))
+            elif line.startswith('-'):
+                if ulCount == 0:
+                    htmlFile.write('<ul>\n')
+                htmlFile.write('\t{}{}{}\n'.format(
+                    markdownList['-'].split(' ')[0], line[2:], markdownList['-'].split(' ')[1]))
+                ulCount += 1
             else:
-                with open(sys.argv[2], 'a') as htmlFile:
-                    htmlFile.write(line)
+                if ulCount > 0:
+                    htmlFile.write('</ul>\n')
+                    ulCount = 0
+                htmlFile.write(line + '\n')
+
+        if ulCount > 0:
+            htmlFile.write('</ul>\n')
 
     exit(0)
