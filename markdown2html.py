@@ -1,89 +1,63 @@
 #!/usr/bin/python3
-import sys
-import hashlib
-from os.path import exists
+"""
+This is a script to convert a Markdown file to HTML.
 
-def md5_hash(text):
-    return hashlib.md5(text.encode()).hexdigest()
+Usage:
+    ./markdown2html.py [input_file] [output_file]
+
+Arguments:
+    input_file: the name of the Markdown file to be converted
+    output_file: the name of the output HTML file
+
+Example:
+    ./markdown2html.py README.md README.html
+"""
+
+import argparse
+import pathlib
+import re
+
+
+def convert_md_to_html(input_file, output_file):
+    '''
+    Converts markdown file to HTML file
+    '''
+    # Read the contents of the input file
+    with open(input_file, encoding='utf-8') as f:
+        md_content = f.readlines()
+
+    html_content = []
+    for line in md_content:
+        # Check if the line is a heading
+        match = re.match(r'(#){1,6} (.*)', line)
+        if match:
+            # Get the level of the heading
+            h_level = len(match.group(1))
+            # Get the content of the heading
+            h_content = match.group(2)
+            # Append the HTML equivalent of the heading
+            html_content.append(f'<h{h_level}>{h_content}</h{h_level}>\n')
+        else:
+            html_content.append(line)
+
+    # Write the HTML content to the output file
+    with open(output_file, 'w', encoding='utf-8') as f:
+        f.writelines(html_content)
+
 
 if __name__ == '__main__':
-    if len(sys.argv) != 3:
-        sys.stderr.write("Usage: ./markdown2html.py README.md README.html\n")
-        exit(1)
+    # Parse command-line arguments
+    parser = argparse.ArgumentParser(description='Convert markdown to HTML')
+    parser.add_argument('input_file', help='path to input markdown file')
+    parser.add_argument('output_file', help='path to output HTML file')
+    args = parser.parse_args()
 
-    input_file = sys.argv[1]
-    output_file = sys.argv[2]
+    # Check if the input file exists
+    input_path = pathlib.Path(args.input_file)
+    if not input_path.is_file():
+        print(f'Missing {input_path}', file=sys.stderr)
+        sys.exit(1)
 
-    if not input_file.endswith(".md"):
-        sys.stderr.write("First argument must be a markdown file\n")
-        exit(1)
+    # Convert the markdown file to HTML
+    convert_md_to_html(args.input_file, args.output_file)
 
-    if not exists(input_file):
-        sys.stderr.write(f"Missing {input_file}\n")
-        exit(1)
-
-    ul_count = 0
-    ol_count = 0
-    with open(input_file, 'r') as markdown, open(output_file, 'w') as htmlFile:
-        for line in markdown:
-            line = line.rstrip()
-            if line.startswith('#'):
-                hash_count = line.count('#')
-                line_content = line[hash_count:].strip()
-                htmlFile.write(f'<h{hash_count}>{line_content}</h{hash_count}>\n')
-            elif line.startswith('-'):
-                if ul_count == 0:
-                    htmlFile.write('<ul>\n')
-                htmlFile.write(f'  <li>{line[2:].strip()}</li>\n')
-                ul_count += 1
-            elif line.startswith('*'):
-                if ol_count == 0:
-                    htmlFile.write('<ol>\n')
-                htmlFile.write(f'  <li>{line[2:].strip()}</li>\n')
-                ol_count += 1
-            elif line == '':
-                if ul_count > 0:
-                    htmlFile.write('</ul>\n')
-                    ul_count = 0
-                if ol_count > 0:
-                    htmlFile.write('</ol>\n')
-                    ol_count = 0
-            else:
-                if ul_count > 0:
-                    htmlFile.write('</ul>\n')
-                    ul_count = 0
-                if ol_count > 0:
-                    htmlFile.write('</ol>\n')
-                    ol_count = 0
-
-                # Handle paragraph text
-                paragraphs = line.split('\n\n')
-                for paragraph in paragraphs:
-                    paragraph = paragraph.strip()
-                    if paragraph:
-                        paragraph = paragraph.replace("**", "<b>").replace("__", "<em>").replace("**", "</b>").replace("__", "</em>")
-                        paragraph = paragraph.replace("<br>", "<br/>")
-                        
-                        while '[[' in paragraph and ']]' in paragraph:
-                            start = paragraph.index('[[')
-                            end = paragraph.index(']]') + 2
-                            content = paragraph[start+2:end-2]
-                            md5_content = md5_hash(content)
-                            paragraph = paragraph.replace(paragraph[start:end], md5_content)
-
-                        while '((' in paragraph and '))' in paragraph:
-                            start = paragraph.index('((')
-                            end = paragraph.index('))') + 2
-                            content = paragraph[start+2:end-2]
-                            modified_content = content.replace('c', '').replace('C', '')
-                            paragraph = paragraph.replace(paragraph[start:end], modified_content)
-
-                        htmlFile.write(f'<p>\n    {paragraph}\n</p>\n')
-
-        # Ensure any remaining lists are closed
-        if ul_count > 0:
-            htmlFile.write('</ul>\n')
-        if ol_count > 0:
-            htmlFile.write('</ol>\n')
-
-    exit(0)
