@@ -63,4 +63,4 @@ Read or watch:
 ---
 
 ## Author
-* **Ikilai Doreen** - [Mahiuha](https://github.com/Demidorn)
+* **Ikilai Doreen** - [Demidorn](https://github.com/Demidorn)
