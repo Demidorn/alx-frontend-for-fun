@@ -63,4 +63,4 @@ Read or watch:
 ---
 
 ## Author
-* **Joseph Mahiuha** - [Mahiuha](https://github.com/Mahiuha)
+* **Ikilai Doreen** - [Mahiuha](https://github.com/Demidorn)
