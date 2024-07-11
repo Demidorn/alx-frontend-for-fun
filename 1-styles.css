@@ -1,0 +1,41 @@
+/* General Styling
+ */
+
+ *, *::before, *::after {
+ 	box-sizing: border-box;
+ 	margin: 0;
+ 	padding: 0;
+ }
+
+ h2 {
+    margin: 100px;
+    position: relative;
+ }
+
+ a {
+    text-decoration: none;
+    color: #8A153A;
+ }
+
+ a::before {
+    content: '';
+    position: absolute;
+    text-decoration: none;
+    /* width: 100%; */
+    width: 0;
+    height: 2px;
+    bottom: 0;
+    /* left: 0px; */
+    background-color: #8A153A;
+    /* visibility: hidden;
+    transform: scaleX(0);
+    transition: 0.3s ease-out 0s;
+    transform: translate(2.2ex); */
+    transition: 0.5s ease-in-out; 
+ }
+
+ a:hover::before {
+    /* visibility: visible;
+    transform: scaleX(.5); */
+    width: 9.5ch;
+ }
