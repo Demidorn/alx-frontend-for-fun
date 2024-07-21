@@ -2,4 +2,22 @@
 
 @import '103-sort_list';
 
-@debug $list_to_sort;
+@function sort-list($list) {
+  $length: length($list);
+  @for $i from 1 through $length {
+    @for $j from 1 through ($length - $i) {
+      $current: nth($list, $j);
+      $next: nth($list, $j + 1);
+      @if $current > $next {
+        $temp: $current;
+        $list: set-nth($list, $j, $next);
+        $list: set-nth($list, $j + 1, $temp);
+      }
+    }
+  }
+  @return $list;
+}
+
+$sorted_list: sort-list($list_to_sort);
+
+@debug $sorted_list;
